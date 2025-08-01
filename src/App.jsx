@@ -4,10 +4,6 @@ import { getAuth, signInWithCustomToken, signInAnonymously } from 'firebase/auth
 import { getFirestore, collection, query, onSnapshot, doc, setDoc, getDocs } from 'firebase/firestore';
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Wallet, RefreshCcw, Trophy, X } from 'lucide-react';
 
-// Load the ethers library from a CDN since direct npm imports are not available
-// This makes the 'ethers' object available on the global window object
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.umd.min.js"></script>
-
 // Use this for firebase initialization and auth
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -109,6 +105,7 @@ const App = () => {
   const [username, setUsername] = useState('');
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState([]);
+  const [isEthersLoaded, setIsEthersLoaded] = useState(false);
 
   // Constants for the game board
   const BOARD_SIZE = 4;
@@ -141,6 +138,20 @@ const App = () => {
     }
     return className;
   };
+
+  // Dynamically load the Ethers.js library
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.umd.min.js';
+    script.onload = () => {
+      setIsEthersLoaded(true);
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   // Firebase Auth and Firestore Initialization
   useEffect(() => {
@@ -410,16 +421,17 @@ const App = () => {
 
   // Wallet Connection Logic
   const connectWallet = async () => {
+    if (!isEthersLoaded) {
+      setModalMessage('Ethers.js library is still loading. Please wait a moment and try again.');
+      setIsModalOpen(true);
+      return;
+    }
     if (typeof window.ethereum === 'undefined') {
         setModalMessage('No Web3 wallet detected. Please install MetaMask or a similar wallet to connect.');
         setIsModalOpen(true);
         return;
     }
-    if (typeof window.ethers === 'undefined') {
-        setModalMessage('Ethers.js library not loaded. Please try again later.');
-        setIsModalOpen(true);
-        return;
-    }
+    
     try {
       const provider = new window.ethers.BrowserProvider(window.ethereum);
       await provider.send('eth_requestAccounts', []);
@@ -436,8 +448,8 @@ const App = () => {
   };
   
   const getContract = async () => {
-    if (typeof window.ethereum === 'undefined' || typeof window.ethers === 'undefined') {
-      console.error("Web3 wallet or ethers library not available.");
+    if (!isEthersLoaded) {
+      console.error("Ethers.js library not loaded.");
       return null;
     }
     const provider = new window.ethers.BrowserProvider(window.ethereum);

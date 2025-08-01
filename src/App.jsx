@@ -4,6 +4,10 @@ import { getAuth, signInWithCustomToken, signInAnonymously } from 'firebase/auth
 import { getFirestore, collection, query, onSnapshot, doc, setDoc, getDocs } from 'firebase/firestore';
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Wallet, RefreshCcw, Trophy, X } from 'lucide-react';
 
+// Load the ethers library from a CDN since direct npm imports are not available
+// This makes the 'ethers' object available on the global window object
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.umd.min.js"></script>
+
 // Use this for firebase initialization and auth
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
